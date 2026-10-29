@@ -1,16 +1,34 @@
+
 using System.Collections.Generic;
 using UnityEngine;
 
-// Put this on the ROOT object of each platform (e.g. the parent of a stack of cubes).
-// It works out the exact center of the platform's top surface from all of its colliders,
-// so the player always lands perfectly centered no matter how the platform is built.
 public class Platform : MonoBehaviour
 {
-    // Registry of every active platform, so the player doesn't need FindObjectsOfType every hop.
+    // Registry of every active platform.
     public static readonly List<Platform> All = new List<Platform>();
 
-    void OnEnable()  { All.Add(this); }
-    void OnDisable() { All.Remove(this); }
+    private Renderer[] platformRenderers;
+    private bool hasTurnedBlack = false;
+
+    // Number of platforms that have changed color.
+    public static int ChangedCount { get; private set; } = 0;
+
+    void OnEnable()
+    {
+        if (!All.Contains(this))
+            All.Add(this);
+    }
+
+    void OnDisable()
+    {
+        All.Remove(this);
+    }
+
+    void Awake()
+    {
+        platformRenderers = GetComponentsInChildren<Renderer>();
+    }
+    
 
     // Center of the top face, in world space.
     public Vector3 TopCenter
@@ -18,17 +36,53 @@ public class Platform : MonoBehaviour
         get
         {
             Collider[] cols = GetComponentsInChildren<Collider>();
-            if (cols.Length == 0) return transform.position;
+
+            if (cols.Length == 0)
+                return transform.position;
 
             Bounds b = cols[0].bounds;
-            for (int i = 1; i < cols.Length; i++) b.Encapsulate(cols[i].bounds);
+
+            for (int i = 1; i < cols.Length; i++)
+                b.Encapsulate(cols[i].bounds);
 
             return new Vector3(b.center.x, b.max.y, b.center.z);
         }
     }
 
+    // Change this platform to black only once.
+    public void TurnBlack()
+    {
+        if (hasTurnedBlack)
+            return;
+
+        hasTurnedBlack = true;
+        ChangedCount++;
+
+        if (platformRenderers == null)
+            platformRenderers = GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer rend in platformRenderers)
+        {
+            foreach (Material mat in rend.materials)
+            {
+                if (mat.HasProperty("_BaseColor"))
+                    mat.SetColor("_BaseColor", Color.black);
+                else if (mat.HasProperty("_Color"))
+                    mat.color = Color.black;
+            }
+        }
+
+        Debug.Log("Tiles changed: " + ChangedCount);
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetCounters()
+    {
+      ChangedCount = 0;
+      All.Clear();
+    }
+
 #if UNITY_EDITOR
-    // Shows a small yellow sphere where the player will land (Scene view only).
     void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
