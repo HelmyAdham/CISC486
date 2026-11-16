@@ -1110,6 +1110,24 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33306eaa2b64be147962bb6a42046a98, type: 3}
+--- !u!1 &302236861 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6700663153180668995, guid: 87fde370c64976849aeaf6ec792c57a5, type: 3}
+  m_PrefabInstance: {fileID: 2365820998979141253}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &302236867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302236861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ae7a40279f1d341b02c0376515ada0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundDetector
+  detectionRadius: 0.25
 --- !u!1001 &308080964
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8115,7 +8133,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6700663153180668995, guid: 87fde370c64976849aeaf6ec792c57a5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 302236867}
   m_SourcePrefab: {fileID: 100100000, guid: 87fde370c64976849aeaf6ec792c57a5, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
