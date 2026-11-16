@@ -34,5 +34,14 @@ public class Platform : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(TopCenter, 0.1f);
     }
+
+    // Whether this platform should be counted as a regular tile.
+    public bool CountAsRegularTile = true;
+
+    public static void ResetChangedCount()
+    {
+        ChangedCount = 0;
+    }   
+
 #endif
 }
