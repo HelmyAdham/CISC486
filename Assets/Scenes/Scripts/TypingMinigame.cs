@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
 
-public class TypingMinigame : MonoBehaviour
+// Minigame2: press Space to start, then type the letters shown before time runs out.
+public class TypingMinigame : Minigame
 {
     public GameObject button_holder;
 
@@ -13,26 +13,47 @@ public class TypingMinigame : MonoBehaviour
     public TextMeshProUGUI timer_text;
 
     private List<GameObject> buttons;
+    private List<Color> buttonStartColors;
     private List<char> letters = new List<char>();
     public float timer = 4f;
     private float timer_length;
     private bool isTimerActive = false;
     private bool isPlayed = false;
     private int currentButtonIndex = 0;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    // Runs every time an enemy starts this minigame (was Start).
+    protected override void OnBegin()
     {
-        result.gameObject.SetActive(false);
-        buttons = new List<GameObject>();
-        foreach (Transform child in button_holder.transform)
+        if (buttons == null) // first time only
         {
-            buttons.Add(child.gameObject);
+            buttons = new List<GameObject>();
+            buttonStartColors = new List<Color>();
+            foreach (Transform child in button_holder.transform)
+            {
+                buttons.Add(child.gameObject);
+                Image img = child.GetComponent<Image>();
+                buttonStartColors.Add(img != null ? img.color : Color.white);
+            }
+            timer_length = timer;
         }
-        timer_length = timer; 
+
+        // Reset everything so the minigame can be played again.
+        timer = timer_length;
+        isTimerActive = false;
+        isPlayed = false;
+        currentButtonIndex = 0;
+        letters.Clear();
+        for (int i = 0; i < buttons.Count; i++)
+        {
+            Image img = buttons[i].GetComponent<Image>();
+            if (img != null) img.color = buttonStartColors[i];
+        }
+        result.gameObject.SetActive(false);
+        UpdateTimerText();
     }
 
-    // Update is called once per frame
-    void Update()
+    // Was Update.
+    protected override void OnUpdate()
     {
         if (Keyboard.current.spaceKey.wasPressedThisFrame && !isPlayed)
         {
@@ -44,6 +65,11 @@ public class TypingMinigame : MonoBehaviour
         {
             mainGame();
         }
+        UpdateTimerText();
+    }
+
+    void UpdateTimerText()
+    {
         timer_text.text = "Time: " + (Mathf.Round(timer * 10) / 10).ToString();
     }
 
@@ -54,7 +80,7 @@ public class TypingMinigame : MonoBehaviour
             TextMeshProUGUI childText = button.GetComponentInChildren<TextMeshProUGUI>();
             char randomChar = (char)('a' + Random.Range(0, 26));
             letters.Add(randomChar);
-            childText.text = (randomChar.ToString().ToUpper());
+            childText.text = randomChar.ToString().ToUpper();
         }
     }
 
@@ -65,6 +91,7 @@ public class TypingMinigame : MonoBehaviour
             isTimerActive = false;
             result.gameObject.SetActive(true);
             result.text = "WIN!";
+            FinishAfterDelay(true);
             return;
         }
         var keyboard = Keyboard.current;
@@ -72,16 +99,17 @@ public class TypingMinigame : MonoBehaviour
         timer -= Time.deltaTime;
         if (timer <= 0)
         {
+            timer = 0;
             isTimerActive = false;
             result.gameObject.SetActive(true);
             result.text = "You failed!";
+            FinishAfterDelay(false);
             return;
         }
         else if (keyControl != null && keyControl.wasPressedThisFrame)
         {
             Image buttonImage = buttons[currentButtonIndex].GetComponent<Image>();
             buttonImage.color = Color.green;
-            Debug.Log("Key pressed: " + keyControl);
             currentButtonIndex++;
         }
     }

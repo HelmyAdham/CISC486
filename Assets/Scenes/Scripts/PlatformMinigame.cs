@@ -1,11 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 using System.Collections.Generic;
 using TMPro;
-using UnityEngine.UI;
 
-public class PlatformMinigame : MonoBehaviour
+// Minigame3: press Space to start, then press Right Arrow to cross the platforms without touching an enemy.
+public class PlatformMinigame : Minigame
 {
     public GameObject player;
     public GameObject enemies_holder;
@@ -20,20 +19,39 @@ public class PlatformMinigame : MonoBehaviour
     public float amplitude = 200f;
     public float frequency = 2f;
     private List<Vector2> startPosition;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private Vector2 playerStartPosition;
+
+    // Runs every time an enemy starts this minigame (was Start).
+    protected override void OnBegin()
     {
-        result.gameObject.SetActive(false);
-        timer_length = timer;
-        startPosition = new List<Vector2>();
+        RectTransform playerRect = player.GetComponent<RectTransform>();
+
+        if (startPosition == null) // first time only: remember where everything starts
+        {
+            timer_length = timer;
+            playerStartPosition = playerRect.anchoredPosition;
+            startPosition = new List<Vector2>();
+            foreach (RectTransform child in enemies_holder.transform)
+            {
+                startPosition.Add(child.anchoredPosition);
+            }
+        }
+
+        // Reset everything so the minigame can be played again.
+        timer = timer_length;
+        isTimerActive = false;
+        isPlayed = false;
+        playerRect.anchoredPosition = playerStartPosition;
         foreach (RectTransform child in enemies_holder.transform)
         {
-            startPosition.Add(child.anchoredPosition);
+            child.anchoredPosition = startPosition[child.GetSiblingIndex()];
         }
+        result.gameObject.SetActive(false);
+        UpdateTimerText();
     }
 
-    // Update is called once per frame
-    void Update()
+    // Was Update.
+    protected override void OnUpdate()
     {
         if (Keyboard.current.spaceKey.wasPressedThisFrame && !isPlayed)
         {
@@ -44,6 +62,11 @@ public class PlatformMinigame : MonoBehaviour
         {
             mainGame();
         }
+        UpdateTimerText();
+    }
+
+    void UpdateTimerText()
+    {
         timer_text.text = "Time: " + (Mathf.Round(timer * 10) / 10).ToString();
     }
 
@@ -52,33 +75,38 @@ public class PlatformMinigame : MonoBehaviour
         timer -= Time.deltaTime;
         if (timer <= 0)
         {
+            timer = 0;
             isTimerActive = false;
-            result.gameObject.SetActive(true);
-            result.text = "YOU LOSE!";
+            ShowResult("YOU LOSE!");
+            FinishAfterDelay(false);
             return;
         }
         else if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
         {
             RectTransform playerRect = player.GetComponent<RectTransform>();
-
             playerRect.anchoredPosition += new Vector2(256, 0);
         }
         else if (player.transform.position.x >= 1472)
         {
-            Debug.Log(player.transform.position.x);
             isTimerActive = false;
-            result.gameObject.SetActive(true);
-            result.text = "YOU WIN!";
+            ShowResult("YOU WIN!");
+            FinishAfterDelay(true);
             return;
         }
         if (checkCollision(player, enemies_holder))
         {
             isTimerActive = false;
-            result.gameObject.SetActive(true);
-            result.text = "YOU LOSE!";
+            ShowResult("YOU LOSE!");
+            FinishAfterDelay(false);
             return;
         }
         moveEnemies();
+    }
+
+    void ShowResult(string text)
+    {
+        result.gameObject.SetActive(true);
+        result.text = text;
     }
 
     bool checkCollision(GameObject player, GameObject enemy)
